@@ -41,33 +41,6 @@ jobs:
           curl -L https://github.com/theos/sdks/archive/refs/heads/master.tar.gz \
             | tar -xz -C "$THEOS/sdks" --strip-components=1
 
-      - name: Install AltList build framework
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/altlist
-          curl -L \
-            -o /tmp/altlist/altlist.deb \
-            https://opa334.github.io/debs/com.opa334.altlist_1.0.11_iphoneos-arm64.deb
-          dpkg-deb -x /tmp/altlist/altlist.deb /tmp/altlist/root
-          mkdir -p "$THEOS/lib" "$THEOS/include"
-          ALTLIST_FRAMEWORK=""
-          for candidate in \
-            /tmp/altlist/root/Library/Frameworks/AltList.framework \
-            /tmp/altlist/root/var/jb/Library/Frameworks/AltList.framework; do
-            if [ -d "$candidate" ]; then
-              ALTLIST_FRAMEWORK="$candidate"
-              break
-            fi
-          done
-
-          if [ -z "$ALTLIST_FRAMEWORK" ]; then
-            echo 'AltList.framework not found in deb' >&2
-            find /tmp/altlist/root -maxdepth 6 -print
-            exit 1
-          fi
-
-          cp -R "$ALTLIST_FRAMEWORK" "$THEOS/lib/"
-          cp -R "$ALTLIST_FRAMEWORK/Headers" "$THEOS/include/AltList"
 
       - name: Build ${{ matrix.scheme }} package
         run: |

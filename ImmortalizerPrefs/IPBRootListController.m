@@ -18,8 +18,13 @@
 #import <Foundation/Foundation.h>
 #import "IPBRootListController.h"
 #import <Preferences/PSSpecifier.h>
-#import <AltList/ATLApplicationListSubcontrollerController.h>
+#import <dlfcn.h>
+#import <rootless.h>
 #import "Localizer.h"
+
+__attribute__((constructor)) static void LoadAltListFramework(void) {
+    dlopen(ROOT_PATH("/Library/Frameworks/AltList.framework/AltList"), RTLD_NOW);
+}
 
 @implementation IPBRootListController
 -(NSArray *)specifiers {
