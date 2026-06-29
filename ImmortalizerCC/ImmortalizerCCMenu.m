@@ -46,7 +46,7 @@ static void setSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifi
     if (!bundleIdentifier) return;
     NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
     NSMutableArray *excludedBundleIDs = [[prefs arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"] mutableCopy];
-    if (!excludedBundleIDs) excludedBundleIDs = [[allInstalledApplicationBundleIdentifiers() mutableCopy] ?: [NSMutableArray array] mutableCopy];
+    if (!excludedBundleIDs) excludedBundleIDs = [NSMutableArray array];
 
     if (excluded) {
         if (![excludedBundleIDs containsObject:bundleIdentifier]) [excludedBundleIDs addObject:bundleIdentifier];

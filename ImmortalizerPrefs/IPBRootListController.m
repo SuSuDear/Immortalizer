@@ -57,9 +57,7 @@ static NSArray *IPBImmortalForegroundBundleIdentifiers(void) {
 }
 
 static NSArray *IPBDefaultSceneSettingsExcludedBundleIdentifiers(void) {
-    NSMutableArray *excludedBundleIDs = [[IPBAllInstalledApplicationBundleIdentifiers() mutableCopy] ?: [NSMutableArray array] mutableCopy];
-    [excludedBundleIDs removeObjectsInArray:IPBImmortalForegroundBundleIdentifiers()];
-    return excludedBundleIDs;
+    return @[];
 }
 
 @implementation IPBRootListController
@@ -78,7 +76,7 @@ static NSArray *IPBDefaultSceneSettingsExcludedBundleIdentifiers(void) {
     NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
     NSMutableArray *excludedBundleIDs = [[prefs arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"] mutableCopy];
     if (!excludedBundleIDs) {
-        excludedBundleIDs = [IPBDefaultSceneSettingsExcludedBundleIdentifiers() mutableCopy];
+        excludedBundleIDs = [NSMutableArray array];
     } else {
         [excludedBundleIDs removeObjectsInArray:IPBImmortalForegroundBundleIdentifiers()];
     }
