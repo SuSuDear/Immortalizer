@@ -10,9 +10,17 @@ jobs:
   build:
     runs-on: macos-14
 
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme:
+          - rootless
+          - roothide
+
     env:
       THEOS: ${{ github.workspace }}/theos
       FINALPACKAGE: 1
+      THEOS_PACKAGE_SCHEME: ${{ matrix.scheme }}
 
     steps:
       - name: Checkout
@@ -26,9 +34,9 @@ jobs:
           brew install make dpkg ldid xz
           echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
 
-      - name: Set up Theos
+      - name: Set up RootHide Theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          git clone --recursive https://github.com/roothide/theos.git "$THEOS"
           mkdir -p "$THEOS/sdks"
           curl -L https://github.com/theos/sdks/archive/refs/heads/master.tar.gz \
             | tar -xz -C "$THEOS/sdks" --strip-components=1
@@ -43,7 +51,9 @@ jobs:
           dpkg-deb -x /tmp/altlist/altlist.deb /tmp/altlist/root
           mkdir -p "$THEOS/lib" "$THEOS/include"
           ALTLIST_FRAMEWORK=""
-          for candidate in             /tmp/altlist/root/Library/Frameworks/AltList.framework             /tmp/altlist/root/var/jb/Library/Frameworks/AltList.framework; do
+          for candidate in \
+            /tmp/altlist/root/Library/Frameworks/AltList.framework \
+            /tmp/altlist/root/var/jb/Library/Frameworks/AltList.framework; do
             if [ -d "$candidate" ]; then
               ALTLIST_FRAMEWORK="$candidate"
               break
@@ -59,14 +69,15 @@ jobs:
           cp -R "$ALTLIST_FRAMEWORK" "$THEOS/lib/"
           cp -R "$ALTLIST_FRAMEWORK/Headers" "$THEOS/include/AltList"
 
-      - name: Build package
+      - name: Build ${{ matrix.scheme }} package
         run: |
           make --version
+          echo "THEOS_PACKAGE_SCHEME=$THEOS_PACKAGE_SCHEME"
           make clean package
 
-      - name: Upload packages
+      - name: Upload ${{ matrix.scheme }} package
         uses: actions/upload-artifact@v4
         with:
-          name: packages
+          name: packages-${{ matrix.scheme }}
           path: packages/*.deb
           if-no-files-found: error
