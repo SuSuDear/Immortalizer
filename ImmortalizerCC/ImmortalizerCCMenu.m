@@ -20,28 +20,6 @@
 #import <notify.h>
 
 
-static NSArray *allInstalledApplicationBundleIdentifiers(void) {
-    NSMutableArray *bundleIdentifiers = [NSMutableArray array];
-    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
-    id workspace = [workspaceClass respondsToSelector:@selector(defaultWorkspace)] ? [workspaceClass performSelector:@selector(defaultWorkspace)] : nil;
-    NSArray *applications = [workspace respondsToSelector:@selector(allApplications)] ? [workspace performSelector:@selector(allApplications)] : nil;
-
-    for (id application in applications) {
-        NSString *bundleIdentifier = nil;
-        if ([application respondsToSelector:@selector(applicationIdentifier)]) {
-            bundleIdentifier = [application performSelector:@selector(applicationIdentifier)];
-        } else if ([application respondsToSelector:@selector(bundleIdentifier)]) {
-            bundleIdentifier = [application performSelector:@selector(bundleIdentifier)];
-        }
-
-        if (bundleIdentifier && ![bundleIdentifiers containsObject:bundleIdentifier]) {
-            [bundleIdentifiers addObject:bundleIdentifier];
-        }
-    }
-
-    return bundleIdentifiers;
-}
-
 static void setSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifier, BOOL excluded) {
     if (!bundleIdentifier) return;
     NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];

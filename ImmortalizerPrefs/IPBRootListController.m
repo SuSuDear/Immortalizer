@@ -23,28 +23,6 @@
 
 
 
-static NSArray *IPBAllInstalledApplicationBundleIdentifiers(void) {
-    NSMutableArray *bundleIdentifiers = [NSMutableArray array];
-    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
-    id workspace = [workspaceClass respondsToSelector:@selector(defaultWorkspace)] ? [workspaceClass performSelector:@selector(defaultWorkspace)] : nil;
-    NSArray *applications = [workspace respondsToSelector:@selector(allApplications)] ? [workspace performSelector:@selector(allApplications)] : nil;
-
-    for (id application in applications) {
-        NSString *bundleIdentifier = nil;
-        if ([application respondsToSelector:@selector(applicationIdentifier)]) {
-            bundleIdentifier = [application performSelector:@selector(applicationIdentifier)];
-        } else if ([application respondsToSelector:@selector(bundleIdentifier)]) {
-            bundleIdentifier = [application performSelector:@selector(bundleIdentifier)];
-        }
-
-        if (bundleIdentifier && ![bundleIdentifiers containsObject:bundleIdentifier]) {
-            [bundleIdentifiers addObject:bundleIdentifier];
-        }
-    }
-
-    return bundleIdentifiers;
-}
-
 static NSArray *IPBImmortalForegroundBundleIdentifiers(void) {
     NSArray *bundleIdentifiers = [[[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"] arrayForKey:@"ImmortalForegroundBundleIDs"];
     if (![bundleIdentifiers isKindOfClass:[NSArray class]]) {
@@ -54,10 +32,6 @@ static NSArray *IPBImmortalForegroundBundleIdentifiers(void) {
         bundleIdentifiers = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
     }
     return [bundleIdentifiers isKindOfClass:[NSArray class]] ? bundleIdentifiers : @[];
-}
-
-static NSArray *IPBDefaultSceneSettingsExcludedBundleIdentifiers(void) {
-    return @[];
 }
 
 @implementation IPBRootListController
