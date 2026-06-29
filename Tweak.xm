@@ -367,6 +367,8 @@ static void immortalizerPreferencesChanged() {
 }
 
 static void prefsNotifsChanged() {
+    if (!immortalizerEnabled) return;
+
     Immortalizer *immortalizer = [Immortalizer sharedInstance];
     NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
     for (NSString * immortalApp in immortalBundleIDs) {
