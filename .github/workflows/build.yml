@@ -41,6 +41,14 @@ jobs:
           curl -L https://github.com/theos/sdks/archive/refs/heads/master.tar.gz \
             | tar -xz -C "$THEOS/sdks" --strip-components=1
 
+      - name: Install CCSupport headers
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/opa334/CCSupportTemplates.git /tmp/CCSupportTemplates
+          cp -R /tmp/CCSupportTemplates/Headers/ControlCenterUI "$THEOS/include/"
+          cp -R /tmp/CCSupportTemplates/Headers/ControlCenterUIKit "$THEOS/include/"
+          cp -R /tmp/CCSupportTemplates/Headers/ControlCenterServices "$THEOS/include/"
+
       - name: Build and install AltList for ${{ matrix.scheme }}
         run: |
           set -euo pipefail
