@@ -28,6 +28,18 @@ static BOOL isFolderTransitioning = false;
 static BOOL isIndicatorEnabled;
 static BOOL isToastEnabled;
 static BOOL isLockIndicatorEnabled;
+static NSMapTable *sceneSettingsBundleIDMap;
+
+static void rememberBundleIdentifierForSceneSettings(id sceneSettings, NSString *bundleIdentifier) {
+    if (!sceneSettings || !bundleIdentifier) return;
+    if (!sceneSettingsBundleIDMap) sceneSettingsBundleIDMap = [NSMapTable weakToStrongObjectsMapTable];
+    [sceneSettingsBundleIDMap setObject:bundleIdentifier forKey:sceneSettings];
+}
+
+static NSString *bundleIdentifierForSceneSettings(id sceneSettings) {
+    if (!sceneSettings || !sceneSettingsBundleIDMap) return nil;
+    return [sceneSettingsBundleIDMap objectForKey:sceneSettings];
+}
 
 %group init
 
@@ -148,15 +160,24 @@ static BOOL isLockIndicatorEnabled;
 %hook FBScene
 -(void)updateSettings:(id)arg1 withTransitionContext:(id)arg2 completion:(id)arg3{
     FBProcess *process = self.clientProcess;   
-    if (immortalizerEnabled && process) {
+    if (process) {
         NSString *bundleIdentifier = process.bundleIdentifier;
-        NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"]; 
-          
-        if ([immortalBundleIDs containsObject:bundleIdentifier] && arg2 == nil) { 
-            Immortalizer *immortalizer = [Immortalizer sharedInstance];
-            [immortalizer updateAccessoryForBundle:bundleIdentifier];
-            return;
-        } 
+
+        if (bundleIdentifier && arg1) {
+            id sceneSettings = arg1;
+            if ([arg1 respondsToSelector:@selector(settings)]) sceneSettings = [arg1 settings];
+            rememberBundleIdentifierForSceneSettings(sceneSettings, bundleIdentifier);
+        }
+
+        if (immortalizerEnabled) {
+            NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"]; 
+              
+            if ([immortalBundleIDs containsObject:bundleIdentifier] && arg2 == nil) { 
+                Immortalizer *immortalizer = [Immortalizer sharedInstance];
+                [immortalizer updateAccessoryForBundle:bundleIdentifier];
+                return;
+            }
+        }
     }
     %orig; 
 }
@@ -230,8 +251,14 @@ static BOOL isLockIndicatorEnabled;
 
 %hook UIMutableApplicationSceneSettings
 -(void)setDeactivationReasons:(unsigned long long)arg1 {
-    if (arg1 != 0)
-        return;
+    NSString *bundleIdentifier = bundleIdentifierForSceneSettings(self);
+    NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+
+    if (immortalizerEnabled && bundleIdentifier && [immortalBundleIDs containsObject:bundleIdentifier]) {
+        if (arg1 != 0)
+            return;
+    }
+
     %orig;
 }
 

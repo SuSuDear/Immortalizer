@@ -1,0 +1,80 @@
+name: Build Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      THEOS: ${{ github.workspace }}/theos
+      FINALPACKAGE: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            clang \
+            git \
+            curl \
+            xz-utils \
+            fakeroot \
+            file \
+            perl \
+            python3 \
+            rsync \
+            ldid
+
+      - name: Set up Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          curl -L https://github.com/theos/sdks/archive/refs/heads/master.tar.gz \
+            | tar -xz -C "$THEOS/sdks" --strip-components=1
+
+      - name: Install AltList build framework
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/altlist
+          python3 - <<'PY'
+          import json, urllib.request
+          api = 'https://api.github.com/repos/opa334/AltList/releases/latest'
+          data = json.load(urllib.request.urlopen(api))
+          assets = data.get('assets', [])
+          debs = [a['browser_download_url'] for a in assets if a.get('name', '').endswith('.deb')]
+          if not debs:
+              raise SystemExit('No AltList .deb asset found')
+          print(debs[0])
+          urllib.request.urlretrieve(debs[0], '/tmp/altlist/altlist.deb')
+          PY
+          dpkg-deb -x /tmp/altlist/altlist.deb /tmp/altlist/root
+          mkdir -p "$THEOS/lib" "$THEOS/include"
+          if [ -d /tmp/altlist/root/Library/Frameworks/AltList.framework ]; then
+            cp -R /tmp/altlist/root/Library/Frameworks/AltList.framework "$THEOS/lib/"
+            cp -R /tmp/altlist/root/Library/Frameworks/AltList.framework/Headers "$THEOS/include/AltList"
+          else
+            echo 'AltList.framework not found in deb' >&2
+            find /tmp/altlist/root -maxdepth 4 -type d -name 'AltList.framework' -print
+            exit 1
+          fi
+
+      - name: Build package
+        run: make clean package
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: packages/*.deb
+          if-no-files-found: error
