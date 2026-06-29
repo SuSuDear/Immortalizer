@@ -18,7 +18,43 @@
 #import <Foundation/Foundation.h>
 #import "IPBRootListController.h"
 #import <Preferences/PSSpecifier.h>
+#import <notify.h>
 #import "Localizer.h"
+
+
+
+static NSArray *IPBAllInstalledApplicationBundleIdentifiers(void) {
+    NSMutableArray *bundleIdentifiers = [NSMutableArray array];
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    id workspace = [workspaceClass respondsToSelector:@selector(defaultWorkspace)] ? [workspaceClass performSelector:@selector(defaultWorkspace)] : nil;
+    NSArray *applications = [workspace respondsToSelector:@selector(allApplications)] ? [workspace performSelector:@selector(allApplications)] : nil;
+
+    for (id application in applications) {
+        NSString *bundleIdentifier = nil;
+        if ([application respondsToSelector:@selector(applicationIdentifier)]) {
+            bundleIdentifier = [application performSelector:@selector(applicationIdentifier)];
+        } else if ([application respondsToSelector:@selector(bundleIdentifier)]) {
+            bundleIdentifier = [application performSelector:@selector(bundleIdentifier)];
+        }
+
+        if (bundleIdentifier && ![bundleIdentifiers containsObject:bundleIdentifier]) {
+            [bundleIdentifiers addObject:bundleIdentifier];
+        }
+    }
+
+    return bundleIdentifiers;
+}
+
+static NSArray *IPBImmortalForegroundBundleIdentifiers(void) {
+    NSArray *bundleIdentifiers = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    return [bundleIdentifiers isKindOfClass:[NSArray class]] ? bundleIdentifiers : @[];
+}
+
+static NSArray *IPBDefaultSceneSettingsExcludedBundleIdentifiers(void) {
+    NSMutableArray *excludedBundleIDs = [[IPBAllInstalledApplicationBundleIdentifiers() mutableCopy] ?: [NSMutableArray array] mutableCopy];
+    [excludedBundleIDs removeObjectsInArray:IPBImmortalForegroundBundleIdentifiers()];
+    return excludedBundleIDs;
+}
 
 @implementation IPBRootListController
 -(NSArray *)specifiers {
@@ -29,6 +65,35 @@
     [self localizeSpecifiers:_specifiers];
 
     return _specifiers;
+}
+
+
+- (void)syncSceneSettingsExcludedApplications {
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
+    NSMutableArray *excludedBundleIDs = [[prefs arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"] mutableCopy];
+    if (!excludedBundleIDs) {
+        excludedBundleIDs = [IPBDefaultSceneSettingsExcludedBundleIdentifiers() mutableCopy];
+    } else {
+        [excludedBundleIDs removeObjectsInArray:IPBImmortalForegroundBundleIdentifiers()];
+    }
+
+    [prefs setObject:excludedBundleIDs forKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
+    [prefs synchronize];
+    notify_post("com.sergy.immortalizer.preferenceschanged.scenesettings");
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self syncSceneSettingsExcludedApplications];
+}
+
+- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
+    [super setPreferenceValue:value specifier:specifier];
+
+    NSString *key = specifier.properties[@"key"];
+    if ([key isEqualToString:@"ImmortalizerSceneSettingsExcludedBundleIDs"]) {
+        [self syncSceneSettingsExcludedApplications];
+    }
 }
 
 -(void)sourceCode {

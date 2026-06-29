@@ -17,6 +17,49 @@
 
 #import "ImmortalizerCCMenu.h"
 #import "Localizer.h"
+#import <notify.h>
+
+
+static NSArray *allInstalledApplicationBundleIdentifiers(void) {
+    NSMutableArray *bundleIdentifiers = [NSMutableArray array];
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    id workspace = [workspaceClass respondsToSelector:@selector(defaultWorkspace)] ? [workspaceClass performSelector:@selector(defaultWorkspace)] : nil;
+    NSArray *applications = [workspace respondsToSelector:@selector(allApplications)] ? [workspace performSelector:@selector(allApplications)] : nil;
+
+    for (id application in applications) {
+        NSString *bundleIdentifier = nil;
+        if ([application respondsToSelector:@selector(applicationIdentifier)]) {
+            bundleIdentifier = [application performSelector:@selector(applicationIdentifier)];
+        } else if ([application respondsToSelector:@selector(bundleIdentifier)]) {
+            bundleIdentifier = [application performSelector:@selector(bundleIdentifier)];
+        }
+
+        if (bundleIdentifier && ![bundleIdentifiers containsObject:bundleIdentifier]) {
+            [bundleIdentifiers addObject:bundleIdentifier];
+        }
+    }
+
+    return bundleIdentifiers;
+}
+
+static void setSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifier, BOOL excluded) {
+    if (!bundleIdentifier) return;
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
+    NSMutableArray *excludedBundleIDs = [[prefs arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"] mutableCopy];
+    if (!excludedBundleIDs) excludedBundleIDs = [[allInstalledApplicationBundleIdentifiers() mutableCopy] ?: [NSMutableArray array] mutableCopy];
+
+    if (excluded) {
+        if (![excludedBundleIDs containsObject:bundleIdentifier]) [excludedBundleIDs addObject:bundleIdentifier];
+    } else {
+        [excludedBundleIDs removeObject:bundleIdentifier];
+    }
+
+    [prefs setObject:excludedBundleIDs forKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
+    NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    if (immortalBundleIDs) [prefs setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];
+    [prefs synchronize];
+    notify_post("com.sergy.immortalizer.preferenceschanged.scenesettings");
+}
 
 @implementation ImmortalizerCCUIMenuModuleViewController
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil{
@@ -65,6 +108,7 @@
             BOOL isFrontAppImmortalized = [immortalBundleIDs containsObject:frontMostApp.bundleIdentifier];
             if (isFrontAppImmortalized) {
                 [immortalBundleIDs removeObject:frontMostApp.bundleIdentifier];
+                setSceneSettingsExcludedForBundleIdentifier(frontMostApp.bundleIdentifier, YES);
                 if (isToastEnabled)
                     [immortalizer showToastWithTitle:frontMostApp.displayName subtitle:localizer(@"AT_REST") icon:[UIImage systemImageNamed:@"arrow.uturn.left.circle.fill"] autoHide:3.0];
                 [[NSUserDefaults standardUserDefaults] setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];
@@ -73,6 +117,7 @@
                 [self setSelected:NO];
             } else {
                 [immortalBundleIDs addObject:frontMostApp.bundleIdentifier];
+                setSceneSettingsExcludedForBundleIdentifier(frontMostApp.bundleIdentifier, NO);
                 if (isToastEnabled)
                     [immortalizer showToastWithTitle:frontMostApp.displayName subtitle:localizer(@"IMMORTALIZED") icon:[UIImage systemImageNamed:@"hourglass.bottomhalf.fill"] autoHide:3.0];
                 [[NSUserDefaults standardUserDefaults] setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];
@@ -152,6 +197,7 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (isFrontAppImmortalized) {
                     [immortalBundleIDs removeObject:frontMostApp.bundleIdentifier];
+                    setSceneSettingsExcludedForBundleIdentifier(frontMostApp.bundleIdentifier, YES);
                     if (isToastEnabled)
                         [immortalizer showToastWithTitle:frontMostApp.displayName subtitle:localizer(@"AT_REST") icon:[UIImage systemImageNamed:@"arrow.uturn.left.circle.fill"] autoHide:3.0];
                     [[NSUserDefaults standardUserDefaults] setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];
@@ -160,6 +206,7 @@
                     [weakSelf setSelected:NO];
                 } else {
                     [immortalBundleIDs addObject:frontMostApp.bundleIdentifier];
+                    setSceneSettingsExcludedForBundleIdentifier(frontMostApp.bundleIdentifier, NO);
                     if (isToastEnabled)
                         [immortalizer showToastWithTitle:frontMostApp.displayName subtitle:localizer(@"IMMORTALIZED") icon:[UIImage systemImageNamed:@"hourglass.bottomhalf.fill"] autoHide:3.0];
                     [[NSUserDefaults standardUserDefaults] setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];

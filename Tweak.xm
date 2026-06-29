@@ -41,6 +41,66 @@ static NSString *bundleIdentifierForSceneSettings(id sceneSettings) {
     return [sceneSettingsBundleIDMap objectForKey:sceneSettings];
 }
 
+
+static NSArray *allInstalledApplicationBundleIdentifiers(void) {
+    NSMutableArray *bundleIdentifiers = [NSMutableArray array];
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    id workspace = [workspaceClass respondsToSelector:@selector(defaultWorkspace)] ? [workspaceClass performSelector:@selector(defaultWorkspace)] : nil;
+    NSArray *applications = [workspace respondsToSelector:@selector(allApplications)] ? [workspace performSelector:@selector(allApplications)] : nil;
+
+    for (id application in applications) {
+        NSString *bundleIdentifier = nil;
+        if ([application respondsToSelector:@selector(applicationIdentifier)]) {
+            bundleIdentifier = [application performSelector:@selector(applicationIdentifier)];
+        } else if ([application respondsToSelector:@selector(bundleIdentifier)]) {
+            bundleIdentifier = [application performSelector:@selector(bundleIdentifier)];
+        }
+
+        if (bundleIdentifier && ![bundleIdentifiers containsObject:bundleIdentifier]) {
+            [bundleIdentifiers addObject:bundleIdentifier];
+        }
+    }
+
+    return bundleIdentifiers;
+}
+
+static BOOL isImmortalizedBundleIdentifier(NSString *bundleIdentifier) {
+    if (!bundleIdentifier) return NO;
+    NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    return [immortalBundleIDs containsObject:bundleIdentifier];
+}
+
+static BOOL isSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifier) {
+    if (!bundleIdentifier) return NO;
+    if (isImmortalizedBundleIdentifier(bundleIdentifier)) return NO;
+
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
+    id excludedObject = [prefs objectForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
+    if (!excludedObject) return YES;
+
+    if (![excludedObject isKindOfClass:[NSArray class]]) return NO;
+    return [(NSArray *)excludedObject containsObject:bundleIdentifier];
+}
+
+static void setSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifier, BOOL excluded) {
+    if (!bundleIdentifier) return;
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
+    NSMutableArray *excludedBundleIDs = [[prefs arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"] mutableCopy];
+    if (!excludedBundleIDs) excludedBundleIDs = [[allInstalledApplicationBundleIdentifiers() mutableCopy] ?: [NSMutableArray array] mutableCopy];
+
+    if (excluded) {
+        if (![excludedBundleIDs containsObject:bundleIdentifier]) [excludedBundleIDs addObject:bundleIdentifier];
+    } else {
+        [excludedBundleIDs removeObject:bundleIdentifier];
+    }
+
+    [prefs setObject:excludedBundleIDs forKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
+    NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    if (immortalBundleIDs) [prefs setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];
+    [prefs synchronize];
+    notify_post("com.sergy.immortalizer.preferenceschanged.scenesettings");
+}
+
 %group init
 
 %hook SpringBoard
@@ -142,11 +202,13 @@ static NSString *bundleIdentifierForSceneSettings(id sceneSettings) {
 			if (app.processState != nil) [[%c(FBSSystemService) sharedService] openApplication:bundleID options:nil withResult:nil];
             if (isToastEnabled) [immortalizer showToastWithTitle:[immortalizer getAppNameForBundle:bundleID] subtitle:localizer(@"AT_REST") icon:[UIImage systemImageNamed:@"arrow.uturn.left.circle.fill"] autoHide:3.0];
             [immortalBundleIDs removeObject:bundleID];
+            setSceneSettingsExcludedForBundleIdentifier(bundleID, YES);
 			
         } else { 
             if (isToastEnabled) [immortalizer showToastWithTitle:[immortalizer getAppNameForBundle:bundleID] subtitle:localizer(@"IMMORTALIZED") icon:[UIImage systemImageNamed:@"hourglass.bottomhalf.fill"] autoHide:3.0];
 			[[%c(FBSSystemService) sharedService] openApplication:bundleID options:nil withResult:nil];
             [immortalBundleIDs addObject:bundleID];
+            setSceneSettingsExcludedForBundleIdentifier(bundleID, NO);
         }
         	[[NSUserDefaults standardUserDefaults] setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];
         	[[NSUserDefaults standardUserDefaults] synchronize];
@@ -252,10 +314,7 @@ static NSString *bundleIdentifierForSceneSettings(id sceneSettings) {
 %hook UIMutableApplicationSceneSettings
 -(void)setDeactivationReasons:(unsigned long long)arg1 {
     NSString *bundleIdentifier = bundleIdentifierForSceneSettings(self);
-    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
-    NSArray *excludedBundleIDs = [prefs arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
-
-    if (immortalizerEnabled && bundleIdentifier && [excludedBundleIDs containsObject:bundleIdentifier]) {
+    if (immortalizerEnabled && bundleIdentifier && isSceneSettingsExcludedForBundleIdentifier(bundleIdentifier)) {
         %orig;
         return;
     }
