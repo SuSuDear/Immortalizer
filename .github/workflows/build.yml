@@ -13,7 +13,6 @@ jobs:
     env:
       THEOS: ${{ github.workspace }}/theos
       FINALPACKAGE: 1
-      GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout
@@ -38,26 +37,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/altlist
-          python3 - <<'PY'
-          import json, os, urllib.request
-
-          token = os.environ.get('GITHUB_TOKEN')
-          req = urllib.request.Request(
-              'https://api.github.com/repos/opa334/AltList/releases/latest',
-              headers={
-                  'Accept': 'application/vnd.github+json',
-                  'User-Agent': 'Immortalizer-GitHub-Actions',
-                  **({'Authorization': f'Bearer {token}'} if token else {})
-              }
-          )
-          data = json.load(urllib.request.urlopen(req))
-          assets = data.get('assets', [])
-          debs = [a['browser_download_url'] for a in assets if a.get('name', '').endswith('.deb')]
-          if not debs:
-              raise SystemExit('No AltList .deb asset found')
-          print(debs[0])
-          urllib.request.urlretrieve(debs[0], '/tmp/altlist/altlist.deb')
-          PY
+          curl -L \
+            -o /tmp/altlist/altlist.deb \
+            https://opa334.github.io/debs/com.opa334.altlist_1.0.11_iphoneos-arm64.deb
           dpkg-deb -x /tmp/altlist/altlist.deb /tmp/altlist/root
           mkdir -p "$THEOS/lib" "$THEOS/include"
           if [ -d /tmp/altlist/root/Library/Frameworks/AltList.framework ]; then
@@ -65,7 +47,7 @@ jobs:
             cp -R /tmp/altlist/root/Library/Frameworks/AltList.framework/Headers "$THEOS/include/AltList"
           else
             echo 'AltList.framework not found in deb' >&2
-            find /tmp/altlist/root -maxdepth 4 -type d -name 'AltList.framework' -print
+            find /tmp/altlist/root -maxdepth 6 -print
             exit 1
           fi
 
