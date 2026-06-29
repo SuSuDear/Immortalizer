@@ -31,63 +31,94 @@
     self = [super initWithFrame:CGRectZero];
     if (self) {
         self.containerView = [[UIView alloc] init];
-        self.containerView.backgroundColor = [UIColor colorWithRed:0.125 green:0.125 blue:0.125 alpha:1.0];
-        self.containerView.layer.cornerRadius = 25;
+        self.containerView.backgroundColor = [UIColor clearColor];
+        self.containerView.layer.cornerRadius = 24;
         self.containerView.layer.masksToBounds = YES;
-        self.containerView.layer.shadowColor = [UIColor blackColor].CGColor;
-        self.containerView.layer.shadowOpacity = 0.18;
-        self.containerView.layer.shadowOffset = CGSizeMake(0, 8);
-        self.containerView.layer.shadowRadius = 10;
+        self.containerView.layer.borderWidth = 0.5;
+        self.containerView.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.18].CGColor;
         self.containerView.translatesAutoresizingMaskIntoConstraints = NO;
         [self addSubview:self.containerView];
+
+        self.layer.shadowColor = [UIColor blackColor].CGColor;
+        self.layer.shadowOpacity = 0.16;
+        self.layer.shadowOffset = CGSizeMake(0, 8);
+        self.layer.shadowRadius = 18;
+        self.layer.masksToBounds = NO;
+
+        UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemUltraThinMaterialDark];
+        UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+        blurView.translatesAutoresizingMaskIntoConstraints = NO;
+        blurView.layer.cornerRadius = 24;
+        blurView.layer.masksToBounds = YES;
+        [self.containerView addSubview:blurView];
+
+        UIView *tintView = [[UIView alloc] init];
+        tintView.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.18];
+        tintView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.containerView addSubview:tintView];
+
+        [NSLayoutConstraint activateConstraints:@[
+            [blurView.leadingAnchor constraintEqualToAnchor:self.containerView.leadingAnchor],
+            [blurView.trailingAnchor constraintEqualToAnchor:self.containerView.trailingAnchor],
+            [blurView.topAnchor constraintEqualToAnchor:self.containerView.topAnchor],
+            [blurView.bottomAnchor constraintEqualToAnchor:self.containerView.bottomAnchor],
+            [tintView.leadingAnchor constraintEqualToAnchor:self.containerView.leadingAnchor],
+            [tintView.trailingAnchor constraintEqualToAnchor:self.containerView.trailingAnchor],
+            [tintView.topAnchor constraintEqualToAnchor:self.containerView.topAnchor],
+            [tintView.bottomAnchor constraintEqualToAnchor:self.containerView.bottomAnchor]
+        ]];
 
         self.hStack = [[UIStackView alloc] init];
         self.hStack.axis = UILayoutConstraintAxisHorizontal;
         self.hStack.alignment = UIStackViewAlignmentCenter;
-        self.hStack.spacing = 2.0;
+        self.hStack.distribution = UIStackViewDistributionFill;
+        self.hStack.spacing = 10.0;
         self.hStack.translatesAutoresizingMaskIntoConstraints = NO;
         [self.containerView addSubview:self.hStack];
 
         if (icon) {
             UIImageView *iconView = [[UIImageView alloc] initWithImage:icon];
             iconView.contentMode = UIViewContentModeScaleAspectFit;
+            iconView.tintColor = [UIColor whiteColor];
             iconView.translatesAutoresizingMaskIntoConstraints = NO;
             [self.hStack addArrangedSubview:iconView];
             
             [NSLayoutConstraint activateConstraints:@[
-                [iconView.widthAnchor constraintEqualToConstant:24],
-                [iconView.heightAnchor constraintEqualToConstant:24]
+                [iconView.widthAnchor constraintEqualToConstant:22],
+                [iconView.heightAnchor constraintEqualToConstant:22]
             ]];
-            
-            [self.hStack setLayoutMargins:UIEdgeInsetsMake(0, 20, 0, 20)];
-            self.hStack.layoutMarginsRelativeArrangement = YES;
         }
 
         self.vStack = [[UIStackView alloc] init];
         self.vStack.axis = UILayoutConstraintAxisVertical;
         self.vStack.alignment = UIStackViewAlignmentCenter;
-        self.vStack.spacing = 2.0;
+        self.vStack.distribution = UIStackViewDistributionFill;
+        self.vStack.spacing = 1.0;
         self.vStack.translatesAutoresizingMaskIntoConstraints = NO;
         [self.hStack addArrangedSubview:self.vStack];
 
         UILabel *titleLabel = [[UILabel alloc] init];
         titleLabel.textColor = [UIColor whiteColor];
-        titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
         titleLabel.textAlignment = NSTextAlignmentCenter;
+        titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+        titleLabel.numberOfLines = 1;
         titleLabel.text = title;
         titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         [self.vStack addArrangedSubview:titleLabel];
 
         UILabel *subtitleLabel = [[UILabel alloc] init];
-        subtitleLabel.textColor = [UIColor lightGrayColor];
-        subtitleLabel.font = [UIFont boldSystemFontOfSize:12];
+        subtitleLabel.textColor = [UIColor colorWithWhite:1.0 alpha:0.72];
+        subtitleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightMedium];
         subtitleLabel.textAlignment = NSTextAlignmentCenter;
+        subtitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+        subtitleLabel.numberOfLines = 1;
         subtitleLabel.text = subtitle;
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         [self.vStack addArrangedSubview:subtitleLabel];
 
-        [self.vStack setLayoutMargins:UIEdgeInsetsMake(4, 0, 4, 0)];
-        self.vStack.layoutMarginsRelativeArrangement = YES;
+        [self.hStack setLayoutMargins:UIEdgeInsetsMake(8, 18, 8, 18)];
+        self.hStack.layoutMarginsRelativeArrangement = YES;
 
         [NSLayoutConstraint activateConstraints:@[
             [self.containerView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:10],
@@ -100,7 +131,8 @@
             [self.hStack.leadingAnchor constraintEqualToAnchor:self.containerView.leadingAnchor],
             [self.hStack.trailingAnchor constraintEqualToAnchor:self.containerView.trailingAnchor],
             [self.hStack.topAnchor constraintEqualToAnchor:self.containerView.topAnchor],
-            [self.hStack.bottomAnchor constraintEqualToAnchor:self.containerView.bottomAnchor]
+            [self.hStack.bottomAnchor constraintEqualToAnchor:self.containerView.bottomAnchor],
+            [self.vStack.centerYAnchor constraintEqualToAnchor:self.hStack.centerYAnchor]
         ]];
 
         if (seconds > 0) {
@@ -129,8 +161,9 @@
     [constraints addObjectsFromArray:@[
         [self.centerXAnchor constraintEqualToAnchor:keyWindow.centerXAnchor],
         [self.topAnchor constraintEqualToAnchor:keyWindow.topAnchor constant:40],
-        [self.widthAnchor constraintEqualToConstant:keyWindow.bounds.size.width - 190],
-        [self.heightAnchor constraintEqualToConstant:70]
+        [self.widthAnchor constraintLessThanOrEqualToConstant:keyWindow.bounds.size.width - 72],
+        [self.widthAnchor constraintGreaterThanOrEqualToConstant:210],
+        [self.heightAnchor constraintEqualToConstant:58]
     ]];
     
     [NSLayoutConstraint activateConstraints:constraints];
