@@ -8,11 +8,12 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: macos-14
 
     env:
       THEOS: ${{ github.workspace }}/theos
       FINALPACKAGE: 1
+      GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout
@@ -22,19 +23,9 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            clang \
-            git \
-            curl \
-            xz-utils \
-            fakeroot \
-            file \
-            perl \
-            python3 \
-            rsync \
-            ldid
+          brew update
+          brew install make dpkg ldid xz
+          echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
 
       - name: Set up Theos
         run: |
@@ -48,9 +39,18 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/altlist
           python3 - <<'PY'
-          import json, urllib.request
-          api = 'https://api.github.com/repos/opa334/AltList/releases/latest'
-          data = json.load(urllib.request.urlopen(api))
+          import json, os, urllib.request
+
+          token = os.environ.get('GITHUB_TOKEN')
+          req = urllib.request.Request(
+              'https://api.github.com/repos/opa334/AltList/releases/latest',
+              headers={
+                  'Accept': 'application/vnd.github+json',
+                  'User-Agent': 'Immortalizer-GitHub-Actions',
+                  **({'Authorization': f'Bearer {token}'} if token else {})
+              }
+          )
+          data = json.load(urllib.request.urlopen(req))
           assets = data.get('assets', [])
           debs = [a['browser_download_url'] for a in assets if a.get('name', '').endswith('.deb')]
           if not debs:
@@ -70,7 +70,9 @@ jobs:
           fi
 
       - name: Build package
-        run: make clean package
+        run: |
+          make --version
+          make clean package
 
       - name: Upload packages
         uses: actions/upload-artifact@v4
