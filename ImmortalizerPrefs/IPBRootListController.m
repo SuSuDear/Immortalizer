@@ -46,7 +46,13 @@ static NSArray *IPBAllInstalledApplicationBundleIdentifiers(void) {
 }
 
 static NSArray *IPBImmortalForegroundBundleIdentifiers(void) {
-    NSArray *bundleIdentifiers = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    NSArray *bundleIdentifiers = [[[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    if (![bundleIdentifiers isKindOfClass:[NSArray class]]) {
+        bundleIdentifiers = [[[NSUserDefaults alloc] initWithSuiteName:@"com.apple.springboard"] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    }
+    if (![bundleIdentifiers isKindOfClass:[NSArray class]]) {
+        bundleIdentifiers = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    }
     return [bundleIdentifiers isKindOfClass:[NSArray class]] ? bundleIdentifiers : @[];
 }
 
