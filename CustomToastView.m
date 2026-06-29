@@ -75,6 +75,7 @@
         self.hStack.spacing = 8.0;
         self.hStack.translatesAutoresizingMaskIntoConstraints = NO;
         [self.containerView addSubview:self.hStack];
+        [self.containerView bringSubviewToFront:self.hStack];
 
         if (icon) {
             UIImageView *iconView = [[UIImageView alloc] initWithImage:[icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
@@ -102,7 +103,7 @@
 
         UILabel *titleLabel = [[UILabel alloc] init];
         titleLabel.textColor = [UIColor whiteColor];
-        titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightSemibold];
+        titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
         titleLabel.textAlignment = NSTextAlignmentCenter;
         titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         titleLabel.numberOfLines = 1;
@@ -115,7 +116,7 @@
 
         UILabel *subtitleLabel = [[UILabel alloc] init];
         subtitleLabel.textColor = [UIColor colorWithWhite:1.0 alpha:0.72];
-        subtitleLabel.font = [UIFont systemFontOfSize:12 weight:UIFontWeightMedium];
+        subtitleLabel.font = [UIFont systemFontOfSize:11 weight:UIFontWeightMedium];
         subtitleLabel.textAlignment = NSTextAlignmentCenter;
         subtitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         subtitleLabel.numberOfLines = 1;
@@ -126,7 +127,7 @@
         self.subtitleLabel = subtitleLabel;
         [self.vStack addArrangedSubview:subtitleLabel];
 
-        [self.hStack setLayoutMargins:UIEdgeInsetsMake(7, 14, 7, 14)];
+        [self.hStack setLayoutMargins:UIEdgeInsetsMake(8, 14, 8, 14)];
         self.hStack.layoutMarginsRelativeArrangement = YES;
 
         [NSLayoutConstraint activateConstraints:@[
@@ -140,8 +141,7 @@
             [self.hStack.leadingAnchor constraintEqualToAnchor:self.containerView.leadingAnchor],
             [self.hStack.trailingAnchor constraintEqualToAnchor:self.containerView.trailingAnchor],
             [self.hStack.topAnchor constraintEqualToAnchor:self.containerView.topAnchor],
-            [self.hStack.bottomAnchor constraintEqualToAnchor:self.containerView.bottomAnchor],
-            [self.vStack.centerYAnchor constraintEqualToAnchor:self.hStack.centerYAnchor]
+            [self.hStack.bottomAnchor constraintEqualToAnchor:self.containerView.bottomAnchor]
         ]];
 
         if (seconds > 0) {
@@ -170,17 +170,17 @@
     CGFloat titleWidth = [self.titleLabel sizeThatFits:CGSizeMake(maxWidth, CGFLOAT_MAX)].width;
     CGFloat subtitleWidth = [self.subtitleLabel sizeThatFits:CGSizeMake(maxWidth, CGFLOAT_MAX)].width;
     CGFloat textWidth = MAX(titleWidth, subtitleWidth);
-    CGFloat iconWidth = (self.hStack.arrangedSubviews.count > 1) ? 28.0 : 0.0;
-    CGFloat horizontalPadding = 28.0;
+    CGFloat iconWidth = (self.hStack.arrangedSubviews.count > 1) ? 32.0 : 0.0;
+    CGFloat horizontalPadding = 36.0;
     CGFloat targetWidth = ceil(textWidth + iconWidth + horizontalPadding);
-    targetWidth = MIN(MAX(targetWidth, 150.0), maxWidth);
+    targetWidth = MIN(MAX(targetWidth, 170.0), maxWidth);
 
     NSMutableArray *constraints = [NSMutableArray array];
     [constraints addObjectsFromArray:@[
         [self.centerXAnchor constraintEqualToAnchor:keyWindow.centerXAnchor],
-        [self.topAnchor constraintEqualToAnchor:keyWindow.topAnchor constant:44],
+        [self.topAnchor constraintEqualToAnchor:keyWindow.topAnchor constant:62],
         [self.widthAnchor constraintEqualToConstant:targetWidth],
-        [self.heightAnchor constraintEqualToConstant:46]
+        [self.heightAnchor constraintEqualToConstant:54]
     ]];
     
     [NSLayoutConstraint activateConstraints:constraints];
