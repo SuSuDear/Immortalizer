@@ -291,8 +291,13 @@ static void setSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifi
 
 %hook UIMutableApplicationSceneSettings
 -(void)setDeactivationReasons:(unsigned long long)arg1 {
+    if (!immortalizerEnabled) {
+        %orig;
+        return;
+    }
+
     NSString *bundleIdentifier = bundleIdentifierForSceneSettings(self);
-    if (immortalizerEnabled && bundleIdentifier && isSceneSettingsExcludedForBundleIdentifier(bundleIdentifier)) {
+    if (bundleIdentifier && isSceneSettingsExcludedForBundleIdentifier(bundleIdentifier)) {
         %orig;
         return;
     }
