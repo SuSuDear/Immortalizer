@@ -252,12 +252,15 @@ static NSString *bundleIdentifierForSceneSettings(id sceneSettings) {
 %hook UIMutableApplicationSceneSettings
 -(void)setDeactivationReasons:(unsigned long long)arg1 {
     NSString *bundleIdentifier = bundleIdentifierForSceneSettings(self);
-    NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
+    NSArray *excludedBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
 
-    if (immortalizerEnabled && bundleIdentifier && [immortalBundleIDs containsObject:bundleIdentifier]) {
-        if (arg1 != 0)
-            return;
+    if (immortalizerEnabled && bundleIdentifier && [excludedBundleIDs containsObject:bundleIdentifier]) {
+        %orig;
+        return;
     }
+
+    if (arg1 != 0)
+        return;
 
     %orig;
 }

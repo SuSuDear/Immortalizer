@@ -8,6 +8,9 @@
 "NO_RESPRING_NEEDED" = "No respring needed :)";
 "NOTIFICATIONS" = "Notifications";
 "NOTIFICATIONS_FOOTER" = "Some apps don't show notifications when it's in the foreground. This option will allow the notifications to show when Immortalizer is enabled on a particular app.";
+"SCENE_SETTINGS_EXCEPTIONS" = "Sound Delay Exceptions";
+"SCENE_SETTINGS_EXCEPTIONS_FOOTER" = "Choose apps that should ignore the scene deactivation restriction.";
+"SCENE_SETTINGS_EXCEPTIONS_PER_APP" = "Ignore for specific apps";
 "ENABLE_IMMORTAL_FOREGROUND_PER_APP" = "Enable Foreground Notification Per App";
 "INDICATORS" = "Indicators";
 "INDICATORS_FOOTER" = "Immortalizer has 3 indicators:\n⌛ - when an app is both immortalized and is alive\n🟡 - when app is immortalized but got terminated.\nEnabling this overrides SpringBoard's label accessory.\n🔒 - This indicates that you locked the app, which prevents you from accidentally closing the app from the app switcher.";

@@ -8,6 +8,9 @@
 "NO_RESPRING_NEEDED" = "无需注销设备";
 "NOTIFICATIONS" = "通知";
 "NOTIFICATIONS_FOOTER" = "某些应用在前台运行时不会显示通知\n允许在选定应用上启用“真后台”时显示通知";
+"SCENE_SETTINGS_EXCEPTIONS" = "声音延迟排除";
+"SCENE_SETTINGS_EXCEPTIONS_FOOTER" = "选择后，这些应用将不受场景停用限制影响。";
+"SCENE_SETTINGS_EXCEPTIONS_PER_APP" = "按应用排除";
 "ENABLE_IMMORTAL_FOREGROUND_PER_APP" = "选定应用启用前台通知";
 "INDICATORS" = "指示器";
 "INDICATORS_FOOTER" = "Immortalizer 有三种状态指示：\n⌛ - 当应用处于“真后台”且活跃时\n🟡 - 当应用处于“真后台”但被终止时\n🔒 - 表明已锁定该应用，可防止意外从应用后台切换器中关闭该应用\n\n启用此功能将覆盖 SpringBoard 的标签";
