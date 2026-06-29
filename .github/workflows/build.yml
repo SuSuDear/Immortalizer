@@ -42,14 +42,22 @@ jobs:
             https://opa334.github.io/debs/com.opa334.altlist_1.0.11_iphoneos-arm64.deb
           dpkg-deb -x /tmp/altlist/altlist.deb /tmp/altlist/root
           mkdir -p "$THEOS/lib" "$THEOS/include"
-          if [ -d /tmp/altlist/root/Library/Frameworks/AltList.framework ]; then
-            cp -R /tmp/altlist/root/Library/Frameworks/AltList.framework "$THEOS/lib/"
-            cp -R /tmp/altlist/root/Library/Frameworks/AltList.framework/Headers "$THEOS/include/AltList"
-          else
+          ALTLIST_FRAMEWORK=""
+          for candidate in             /tmp/altlist/root/Library/Frameworks/AltList.framework             /tmp/altlist/root/var/jb/Library/Frameworks/AltList.framework; do
+            if [ -d "$candidate" ]; then
+              ALTLIST_FRAMEWORK="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$ALTLIST_FRAMEWORK" ]; then
             echo 'AltList.framework not found in deb' >&2
             find /tmp/altlist/root -maxdepth 6 -print
             exit 1
           fi
+
+          cp -R "$ALTLIST_FRAMEWORK" "$THEOS/lib/"
+          cp -R "$ALTLIST_FRAMEWORK/Headers" "$THEOS/include/AltList"
 
       - name: Build package
         run: |
