@@ -252,7 +252,8 @@ static NSString *bundleIdentifierForSceneSettings(id sceneSettings) {
 %hook UIMutableApplicationSceneSettings
 -(void)setDeactivationReasons:(unsigned long long)arg1 {
     NSString *bundleIdentifier = bundleIdentifierForSceneSettings(self);
-    NSArray *excludedBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
+    NSUserDefaults *prefs = [[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"];
+    NSArray *excludedBundleIDs = [prefs arrayForKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
 
     if (immortalizerEnabled && bundleIdentifier && [excludedBundleIDs containsObject:bundleIdentifier]) {
         %orig;
