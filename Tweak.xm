@@ -73,8 +73,6 @@ static void setSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifi
     }
 
     [prefs setObject:excludedBundleIDs forKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
-    NSArray *immortalBundleIDs = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
-    if (immortalBundleIDs) [prefs setObject:immortalBundleIDs forKey:@"ImmortalForegroundBundleIDs"];
     [prefs synchronize];
     notify_post("com.sergy.immortalizer.preferenceschanged.scenesettings");
 }

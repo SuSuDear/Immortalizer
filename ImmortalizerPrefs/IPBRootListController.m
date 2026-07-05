@@ -24,10 +24,7 @@
 
 
 static NSArray *IPBImmortalForegroundBundleIdentifiers(void) {
-    NSArray *bundleIdentifiers = [[[NSUserDefaults alloc] initWithSuiteName:@"com.sergy.immortalizer.prefs"] arrayForKey:@"ImmortalForegroundBundleIDs"];
-    if (![bundleIdentifiers isKindOfClass:[NSArray class]]) {
-        bundleIdentifiers = [[[NSUserDefaults alloc] initWithSuiteName:@"com.apple.springboard"] arrayForKey:@"ImmortalForegroundBundleIDs"];
-    }
+    NSArray *bundleIdentifiers = [[[NSUserDefaults alloc] initWithSuiteName:@"com.apple.springboard"] arrayForKey:@"ImmortalForegroundBundleIDs"];
     if (![bundleIdentifiers isKindOfClass:[NSArray class]]) {
         bundleIdentifiers = [[NSUserDefaults standardUserDefaults] arrayForKey:@"ImmortalForegroundBundleIDs"];
     }
@@ -56,6 +53,7 @@ static NSArray *IPBImmortalForegroundBundleIdentifiers(void) {
     }
 
     [prefs setObject:excludedBundleIDs forKey:@"ImmortalizerSceneSettingsExcludedBundleIDs"];
+    [prefs removeObjectForKey:@"ImmortalForegroundBundleIDs"];
     [prefs synchronize];
     notify_post("com.sergy.immortalizer.preferenceschanged.scenesettings");
 }
