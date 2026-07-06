@@ -213,6 +213,7 @@ static void setSceneSettingsExcludedForBundleIdentifier(NSString *bundleIdentifi
             if ([immortalBundleIDs containsObject:bundleIdentifier] && arg2 == nil) { 
                 Immortalizer *immortalizer = [Immortalizer sharedInstance];
                 [immortalizer updateAccessoryForBundle:bundleIdentifier];
+                return;
             }
         }
     }
